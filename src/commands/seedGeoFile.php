@@ -11,29 +11,16 @@ class seedGeoFile extends Command
     protected $description = 'Load + Parse + Save to DB a geodata file.';
 
     private $pdo;
-    private $driver;
 
     public function __construct() {
         parent::__construct();
-        
-        $connection = config('database.default');
-        $this->driver = strtolower(config("database.connections.{$connection}.driver"));
-        
         $this->pdo = \DB::connection()->getPdo(\PDO::FETCH_ASSOC);
         if (!\Schema::hasTable('geo'))
             return;
 
         $this->geoItems = new geoCollection();
     }
-
-    public function sql($sql){
-        $result = $this->pdo->query($sql);
-        if($result === false)
-            throw new Exception("Error in SQL : '$sql'\n".PDO::errorInfo(), 1);
-            
-        return $result->fetch();
-    }    
-
+  
     public function buildDbTree($item, $count = 1, $depth = 0){
         $item->left=$count++;
         $item->depth=$depth;
@@ -114,9 +101,8 @@ class seedGeoFile extends Command
 
         // Build Tree
         $count = 0; $countOrphan = 0;
-        $sql = 'SELECT MAX("right") as maxRight FROM geo';
-        $result = $this->sql($sql);
-        $maxBoundary = isset($result['maxRight']) ?  $result['maxRight']+1 : 0;
+        $result=\DB::table('geo')->max('right');
+        $maxBoundary = $result ?  $result+1 : 0;
         foreach ($this->geoItems->items as $item) {
             if($item->parentId === null){
                 
@@ -144,33 +130,34 @@ class seedGeoFile extends Command
 
         // Store Tree in DB
         $this->info("Writing in Database</info>");
-        
-        if ($this->driver == 'mysql') {
-            $stmt = $this->pdo->prepare("INSERT INTO geo (`id`, `parent_id`, `left`, `right`, `depth`, `name`, `alternames`, `country`, `level`, `population`, `lat`, `long`) VALUES (:id, :parent_id, :left, :right, :depth, :name, :alternames, :country, :level, :population, :lat, :long)");
-        } else {
-            $stmt = $this->pdo->prepare("INSERT INTO geo (\"id\", \"parent_id\", \"left\", \"right\", \"depth\", \"name\", \"alternames\", \"country\", \"level\", \"population\", \"lat\", \"long\") VALUES (:id, :parent_id, :left, :right, :depth, :name, :alternames, :country, :level, :population, :lat, :long)");
-        }
-
         $count = 0;
         $totalCount = count($this->geoItems->items);
         $progressBar = new \Symfony\Component\Console\Helper\ProgressBar($this->output, 100);
         foreach ($this->geoItems->items as $item) {
-            if ( $stmt->execute([
-                ':id'           => $item->getId(),
-                ':parent_id'    => $item->parentId,
-                ':left'         => $item->left,
-                ':right'        => $item->right,
-                ':depth'        => $item->depth,
-                ':name'         => substr($item->data[2],0,40),
-                ':alternames'   => $item->data[3],
-                ':country'      => $item->data[8],
-                ':level'        => $item->data[7],
-                ':population'   => $item->data[14],
-                ':lat'          => $item->data[4],
-                ':long'         => $item->data[5]
-            ]) === false){
-                throw new Exception("Error in SQL : '$sql'\n".PDO::errorInfo(), 1);
-            }
+            $name = substr($item->data[2],0,40);
+            $alternames=json_encode($item->data[3]);
+//            if($alternames)
+//                $alternames=json_encode(['es'=>$alternames[5],'en'=>$alternames[0]]);
+//            else
+//                $alternames=json_encode(['es'=>$name,'en'=>$name]);
+
+            \DB::table('geo')->insert(
+                [
+                'id'           => $item->getId(),
+                'parent_id'    => $item->parentId,
+                'left'         => $item->left,
+                'right'        => $item->right,
+                'depth'        => $item->depth,
+                'name'         => $name,
+                'alternames'   => $alternames,
+                'country'      => $item->data[8],
+                'level'        => $item->data[7],
+                'population'   => $item->data[14],
+                'lat'          => $item->data[4],
+                'long'         => $item->data[5]
+                ]
+            );
+           
             $progress = $count++/$totalCount*100;
             $progressBar->setProgress($progress);
         }
