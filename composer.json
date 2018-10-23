@@ -1,13 +1,13 @@
 {
-    "name": "jpenaroche/laravel_cities",
+    "name": "igaster/laravel_cities",
     "description": "Seed all countries/cities from geonames.org database. Searchable DB tree, ready to use API & a bonus vue.js component!",
     "keywords": ["laravel", "geonames.org", "geolocation", "countries", "cities"],
     "license": "MIT",
-    "homepage": "https://github.com/jpenaroche/laravel_cities.git",
+    "homepage": "https://github.com/igaster/laravel_cities.git",
     "authors": [
         {
-            "name": "Jose A. Peñarroche Delgado",
-            "email": "jpenaroche@gmail.com"
+            "name": "Giannis Gasteratos",
+            "email": "igasteratos@gmail.com"
         }
     ],	
     "require": {
@@ -23,8 +23,8 @@
     },     
     "autoload": {
         "psr-4" : {
-            "Penna\\LaravelCities\\"          : "src/",
-            "Penna\\LaravelCities\\Tests\\"   : "tests/"            
+            "Igaster\\LaravelCities\\"          : "src/",
+            "Igaster\\LaravelCities\\Tests\\"   : "tests/"            
         }
     },
     "minimum-stability": "stable"
