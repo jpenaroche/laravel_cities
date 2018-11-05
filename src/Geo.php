@@ -21,12 +21,12 @@ class Geo extends EloquentTreeItem {
     ];
 
     // Hide From JSON
-    protected $hidden = [
-        'alternames',
-        'left',
-        'right',
-        'depth',
-    ];
+    // protected $hidden = [
+    //     'alternames',
+    //     'left',
+    //     'right',
+    //     'depth',
+    // ];
 
 
     // ----------------------------------------------
