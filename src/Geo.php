@@ -46,11 +46,11 @@ class Geo extends EloquentTreeItem {
     }
 
     public function scopeDescendants($query){
-        return $query->where('left', '>', $this->left)->where('right', '<', $this->right);
+        return $query->where('parent_id',$this->id)->where('left', '>', $this->left)->where('right', '<', $this->right);
     }
 
     public function scopeAncenstors($query){
-        return $query->where('left','<', $this->left)->where('right', '>', $this->right);
+        return $query->where('id',$this->parent_id)->where('left','<', $this->left)->where('right', '>', $this->right);
     }
 
     public function scopeChildren($query){
