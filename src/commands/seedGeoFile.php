@@ -20,7 +20,7 @@ class seedGeoFile extends Command
 
         $this->geoItems = new geoCollection();
     }
-  
+
     public function buildDbTree($item, $count = 1, $depth = 0){
         $item->left=$count++;
         $item->depth=$depth;
@@ -30,7 +30,7 @@ class seedGeoFile extends Command
         $item->right=$count++;
         return $count;
     }
-    
+
     public function printTree($item){
         $levelStr= str_repeat('--', $item->depth);
         $this->info(sprintf("%s %s [%d,%d]", $levelStr, $item->getName(),$item->left,$item->right));
@@ -99,13 +99,31 @@ class seedGeoFile extends Command
         }
         $this->info(" Hierarcy building completed. $count items loaded</info>");
 
+        //Read Gmap Iframes
+        $iframes = [];
+        $fileName = storage_path('geo/iframes.txt');
+        $this->info("Opening File '$fileName'</info>");
+        $handle = fopen($fileName, 'r');
+        $filesize = filesize($fileName);
+        $count = 0;
+        $progressBar = new \Symfony\Component\Console\Helper\ProgressBar($this->output, 100);
+        while (($line = fgetcsv($handle, 0, "\t")) !== false) {
+            $line = explode(',',$line[0]);
+            $iframes [$line[0]] = $line[1];
+            $count++;
+            $progress = ftell($handle)/$filesize*100;
+            $progressBar->setProgress($progress);
+        }
+
+        $this->info(" Gmap Iframes building completed. $count items loaded</info>");
+
         // Build Tree
         $count = 0; $countOrphan = 0;
         $result=\DB::table('geo')->max('right');
         $maxBoundary = $result ?  $result+1 : 0;
         foreach ($this->geoItems->items as $item) {
             if($item->parentId === null){
-                
+
                 if($item->data[7] !== 'PCLI'){
                     // $this->info("- Skiping Orphan {$item->data[2]} #{$item->data[0]}");
                     $countOrphan++;
@@ -143,21 +161,22 @@ class seedGeoFile extends Command
 
             \DB::table('geo')->insert(
                 [
-                'id'           => $item->getId(),
-                'parent_id'    => $item->parentId,
-                'left'         => $item->left,
-                'right'        => $item->right,
-                'depth'        => $item->depth,
-                'name'         => $name,
-                'alternames'   => $alternames,
-                'country'      => $item->data[8],
-                'level'        => $item->data[7],
-                'population'   => $item->data[14],
-                'lat'          => $item->data[4],
-                'long'         => $item->data[5]
+                    'id'           => $item->getId(),
+                    'parent_id'    => $item->parentId,
+                    'left'         => $item->left,
+                    'right'        => $item->right,
+                    'depth'        => $item->depth,
+                    'name'         => $name,
+                    'alternames'   => $alternames,
+                    'country'      => $item->data[8],
+                    'level'        => $item->data[7],
+                    'population'   => $item->data[14],
+                    'lat'          => $item->data[4],
+                    'long'         => $item->data[5],
+                    'iframe'       => @$iframes[$item->getId()]
                 ]
             );
-           
+
             $progress = $count++/$totalCount*100;
             $progressBar->setProgress($progress);
         }

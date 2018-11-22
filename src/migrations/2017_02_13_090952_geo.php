@@ -27,6 +27,7 @@ class Geo extends Migration
                 $table->bigInteger('population');
                 $table->decimal('lat',9,6);
                 $table->decimal('long',9,6);
+                $table->text('iframe')->nullable();
             });
         }
 
