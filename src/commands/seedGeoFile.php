@@ -1,5 +1,6 @@
 <?php namespace Igaster\LaravelCities\commands;
 
+use Dompdf\Exception;
 use Illuminate\Console\Command;
 use Igaster\LaravelCities\commands\helpers\geoItem;
 use Igaster\LaravelCities\commands\helpers\geoCollection;
@@ -41,8 +42,8 @@ class seedGeoFile extends Command
     public function handle() {
         $start = microtime(true);
 
-        $fileName = $this->argument('country') ? strtoupper($this->argument('country')) : 'allCountries';
-        $fileName = storage_path("geo/{$fileName}.txt");
+        $country = $this->argument('country') ? strtoupper($this->argument('country')) : 'allCountries';
+        $fileName = storage_path("geo/{$country}/{$country}.txt");
         $append =  $this->option('append');
 
         // Read Raw file
@@ -99,23 +100,27 @@ class seedGeoFile extends Command
         }
         $this->info(" Hierarcy building completed. $count items loaded</info>");
 
-        //Read Gmap Iframes
-        $iframes = [];
-        $fileName = storage_path('geo/iframes.txt');
-        $this->info("Opening File '$fileName'</info>");
-        $handle = fopen($fileName, 'r');
-        $filesize = filesize($fileName);
-        $count = 0;
-        $progressBar = new \Symfony\Component\Console\Helper\ProgressBar($this->output, 100);
-        while (($line = fgetcsv($handle, 0, "\t")) !== false) {
-            $line = explode(',',$line[0]);
-            $iframes [$line[0]] = $line[1];
-            $count++;
-            $progress = ftell($handle)/$filesize*100;
-            $progressBar->setProgress($progress);
-        }
+       try{
+           //Read Gmap Iframes
+           $iframes = [];
+           $fileName = storage_path("geo/{$country}/iframes.txt");
+           $this->info("Opening File '$fileName'</info>");
+           $handle = fopen($fileName, 'r');
+           $filesize = filesize($fileName);
+           $count = 0;
+           $progressBar = new \Symfony\Component\Console\Helper\ProgressBar($this->output, 100);
+           while (($line = fgetcsv($handle, 0, "\t")) !== false) {
+               $line = explode(',',$line[0]);
+               $iframes [$line[0]] = $line[1];
+               $count++;
+               $progress = ftell($handle)/$filesize*100;
+               $progressBar->setProgress($progress);
+           }
 
-        $this->info(" Gmap Iframes building completed. $count items loaded</info>");
+           $this->info("Gmap Iframes building completed. $count items loaded</info>");
+       }catch (\Exception $e){
+           $this->info("There is not an iframes.txt file</info>");
+       }
 
         // Build Tree
         $count = 0; $countOrphan = 0;
