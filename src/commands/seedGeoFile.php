@@ -166,11 +166,8 @@ class seedGeoFile extends Command
             $progressBar = new \Symfony\Component\Console\Helper\ProgressBar($this->output, 100);
             foreach ($this->geoItems->items as $item) {
                 $name = substr($item->data[2], 0, 40);
-                $alternames = json_encode($item->data[3]);
-//            if($alternames)
-//                $alternames=json_encode(['es'=>$alternames[5],'en'=>$alternames[0]]);
-//            else
-//                $alternames=json_encode(['es'=>$name,'en'=>$name]);
+
+               $alternames=json_encode(['en'=>$name]);
 
                 \DB::table('geo')->insert(
                     [
